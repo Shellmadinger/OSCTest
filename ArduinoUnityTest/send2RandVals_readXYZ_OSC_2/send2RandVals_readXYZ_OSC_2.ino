@@ -1,9 +1,10 @@
 #include <ArduinoOSCWiFi.h>
+#include <U8g2lib.h>
+#include <Wire.h>
 
-
-
+//OLED setup
+U8G2_SH1106_128X64_NONAME_F_HW_I2C oled(U8G2_R0, /* reset=*/U8X8_PIN_NONE);
 // WiFi stuff change it to whatever matches your network
-//const int LEDpin = 21;
 const char* ssid = "Khan_2.4G";
 const char* pwd = "9053387336";
 
@@ -27,6 +28,9 @@ String cnvIP;
 float xDirection;
 float yDirection;
 
+//brightness value
+int brightness;
+int LEDpin = 3;
 
 ///function called when data is received from Unity
 void unityOSCdata(const OscMessage& unityMessage) 
@@ -36,23 +40,15 @@ void unityOSCdata(const OscMessage& unityMessage)
 xDirection = unityMessage.arg<float>(0);
 yDirection = unityMessage.arg<float>(1);
 
-  Serial.print("::: RECEIVE ::: Unity ");
-  Serial.print(sendIPaddress);
-  Serial.print("-> Arduino IP: ");
-  Serial.print(cnvIP);
-  Serial.print(" Port: ");
-  Serial.print(myReceivePort);
-  Serial.print(" : ");
-  Serial.print(unityMessageTag);
-  Serial.print("\t");
-  Serial.print(xDirection);
-  Serial.print("\t");
-  Serial.print(yDirection);
-  Serial.println();
+//draw unity values to the OLED screen
+oled.clearBuffer();
+oled.setFont(u8g2_font_ncenB14_tr);
+oled.setCursor(40,50);
+oled.print(yDirection);
+oled.setCursor(40,20);
+oled.print(xDirection);
+oled.sendBuffer();
 
-  //pinMode(LEDpin, OUTPUT);
-  //int brightness = map(xDirection,-1,1,0,255);
-  //analogWrite(LEDpin,brightness);
  
 }
 
@@ -62,7 +58,8 @@ yDirection = unityMessage.arg<float>(1);
 
 void setup() 
 {
-    
+    oled.begin();
+    oled.clearBuffer();
     Serial.begin(9600);
 
 //connect to WiFi
@@ -85,7 +82,8 @@ void setup()
     pinMode(LED_BUILTIN,OUTPUT);
     digitalWrite(LED_BUILTIN,HIGH);
 
-    
+    ///set the other LEDpins as output
+    pinMode(LEDpin, OUTPUT);
  
     //////******THE OUTPUTS*********//////
     //This binds the incoming data to a callback function (just like how it is set up on the unity side)
