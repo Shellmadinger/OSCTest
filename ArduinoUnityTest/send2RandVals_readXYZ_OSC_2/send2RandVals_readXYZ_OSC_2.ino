@@ -5,13 +5,13 @@
 //OLED setup
 U8G2_SH1106_128X64_NONAME_F_HW_I2C oled(U8G2_R0, /* reset=*/U8X8_PIN_NONE);
 // WiFi stuff change it to whatever matches your network
-const char* ssid = "Khan_2.4G";
-const char* pwd = "9053387336";
+const char* ssid = "Firaas's Galaxy S10";
+const char* pwd = "ylvv8273";
 
 
 // for ArduinoOSC
 ///IP address of your computer
-const char* sendIPaddress = "192.168.1.132";
+const char* sendIPaddress = "192.168.168.109";
 //this is message address that is used by unity 
 const char* arduinoMessageTag = "/arduino2";
 //port specified in the OSC in variable in Unity
@@ -28,9 +28,13 @@ String cnvIP;
 float xDirection;
 float yDirection;
 
-//brightness value
-int brightness;
-int LEDpin = 3;
+//Motor pin values
+const int motorOnePwn = 2;
+const int motorOneForward = 3;
+const int motorOneBackwards = 4;
+const int motorTwoPwn = 5;
+const int motorTwoForward = 6;
+const int motorTwoBackwards = 7;
 
 ///function called when data is received from Unity
 void unityOSCdata(const OscMessage& unityMessage) 
@@ -40,16 +44,36 @@ void unityOSCdata(const OscMessage& unityMessage)
 xDirection = unityMessage.arg<float>(0);
 yDirection = unityMessage.arg<float>(1);
 
-//draw unity values to the OLED screen
-oled.clearBuffer();
-oled.setFont(u8g2_font_ncenB14_tr);
-oled.setCursor(40,50);
-oled.print(yDirection);
-oled.setCursor(40,20);
-oled.print(xDirection);
-oled.sendBuffer();
+if (yDirection>0){
+  analogWrite(motorOnePwn, 255);
+  digitalWrite(motorOneForward, HIGH);
+  digitalWrite(motorOneBackwards, LOW);
+  analogWrite(motorTwoPwn, 255);
+  digitalWrite(motorTwoForward, HIGH);
+  digitalWrite(motorTwoBackwards, LOW);
+}
 
- 
+else if (yDirection<0){
+  analogWrite(motorOnePwn, 255);
+  digitalWrite(motorOneForward, LOW);
+  digitalWrite(motorOneBackwards, HIGH);
+  analogWrite(motorTwoPwn, 255);
+  digitalWrite(motorTwoForward, LOW);
+  digitalWrite(motorTwoBackwards, HIGH);
+
+}
+
+else{
+  analogWrite(motorOnePwn,255);
+  digitalWrite(motorOneForward, LOW);
+  digitalWrite(motorOneBackwards, LOW);
+  analogWrite(motorTwoPwn,255);
+  digitalWrite(motorTwoForward, LOW);
+  digitalWrite(motorTwoBackwards, LOW);
+}
+
+Serial.print(yDirection);
+
 }
 
 
@@ -58,9 +82,12 @@ oled.sendBuffer();
 
 void setup() 
 {
-    oled.begin();
-    oled.clearBuffer();
-    Serial.begin(9600);
+  pinMode(motorOnePwn, INPUT);
+  pinMode(motorOneForward, INPUT);
+  pinMode(motorOneBackwards, INPUT);
+  pinMode(motorTwoPwn, INPUT);
+  pinMode(motorTwoForward, INPUT);
+  pinMode(motorTwoBackwards, INPUT);
 
 //connect to WiFi
     WiFi.begin(ssid, pwd);
@@ -81,9 +108,6 @@ void setup()
     //turns on the built in LED to show it conneted
     pinMode(LED_BUILTIN,OUTPUT);
     digitalWrite(LED_BUILTIN,HIGH);
-
-    ///set the other LEDpins as output
-    pinMode(LEDpin, OUTPUT);
  
     //////******THE OUTPUTS*********//////
     //This binds the incoming data to a callback function (just like how it is set up on the unity side)
